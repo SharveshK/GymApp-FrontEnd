@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, ActivityIndicator, ScrollView, 
   RefreshControl, TouchableOpacity, StatusBar 
@@ -12,17 +12,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 const DashboardScreen = ({ navigation }: any) => {
   const [latestWeight, setLatestWeight] = useState<number | null>(null);
   const [latestFat, setLatestFat] = useState<number | null>(null);
+  const [userFirstName, setUserFirstName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
     try {
-      const response = await api.get('/api/v1/progress-logs');
-      const logs = response.data;
-      if (logs && logs.length > 0) {
-        const currentLog = logs[logs.length - 1];
-        setLatestWeight(currentLog.weightKg);
-        setLatestFat(currentLog.bodyFatPercentage);
+      // FIX: Use 'profile/me' to get the initial registration data
+      const response = await api.get('/api/v1/profile/me');
+      const profile = response.data;
+      
+      if (profile) {
+        setLatestWeight(profile.weightKg);
+        setLatestFat(profile.bodyFatPercentage);
+        // Assuming your profile DTO has a firstName (or we can use 'Operative' as fallback)
+        setUserFirstName(profile.firstName || 'OPERATIVE');
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
@@ -52,7 +56,6 @@ const DashboardScreen = ({ navigation }: any) => {
   const GridButton = ({ title, subtitle, icon, onPress, titleColor = "#EDEDED" }: any) => (
     <TouchableOpacity style={styles.gridButton} onPress={onPress}>
       <View style={styles.iconCircle}>
-        {/* FIX #1: Brightened Icons (75% White) */}
         <Ionicons name={icon} size={24} color="rgba(255,255,255,0.75)" />
       </View>
       <View>
@@ -88,12 +91,11 @@ const DashboardScreen = ({ navigation }: any) => {
         {/* --- HEADER ROW --- */}
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => alert("Profile Coming Soon")} style={styles.profileButton}>
-            {/* FIX #1: Brightened Profile Icon */}
             <Ionicons name="person" size={18} color="rgba(255,255,255,0.75)" />
           </TouchableOpacity>
           <View style={styles.headerTextView}>
             <Text style={styles.headerTitle}>COMMAND CENTER</Text>
-            <Text style={styles.subGreeting}>SYSTEMS ONLINE.</Text>
+            <Text style={styles.subGreeting}>READY, {userFirstName.toUpperCase()}.</Text>
           </View>
           <View style={{ width: 40 }} /> 
         </View>
@@ -102,7 +104,6 @@ const DashboardScreen = ({ navigation }: any) => {
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
             <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 6}}>
-               {/* FIX #1: Brightened Icon */}
                <Ionicons name="scale-outline" size={14} color="rgba(255,255,255,0.75)" style={{marginRight: 6}} />
                <Text style={styles.statLabel}>CURRENT WEIGHT</Text>
             </View>
@@ -113,7 +114,6 @@ const DashboardScreen = ({ navigation }: any) => {
           
           <View style={styles.statBox}>
             <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 6}}>
-               {/* FIX #1: Brightened Icon */}
                <Ionicons name="body-outline" size={14} color="rgba(255,255,255,0.75)" style={{marginRight: 6}} />
                <Text style={styles.statLabel}>BODY FAT</Text>
             </View>
@@ -145,7 +145,6 @@ const DashboardScreen = ({ navigation }: any) => {
             title="NUTRITION" 
             subtitle="Meal Plans" 
             icon="restaurant" 
-            // CHANGE THIS LINE BELOW:
             onPress={() => navigation.navigate('Diet')} 
           />
 
@@ -173,7 +172,6 @@ const DashboardScreen = ({ navigation }: any) => {
           <Ionicons name="chevron-forward" size={20} color="#4F8DFF" />
         </TouchableOpacity>
 
-        {/* FIX #3 & #4: Logout Styling */}
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <Text style={styles.logoutText}>TERMINATE SESSION</Text>
         </TouchableOpacity>
@@ -217,10 +215,9 @@ const styles = StyleSheet.create({
     marginTop: 4 
   },
 
-  // METRICS (FIX #4 & #2)
+  // METRICS
   statsContainer: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    // FIX #4: Premium Glass Texture
     backgroundColor: 'rgba(255,255,255,0.04)', 
     borderRadius: 18, 
     paddingVertical: 22, 
@@ -228,7 +225,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     borderWidth: 1, 
     borderColor: 'rgba(255,255,255,0.06)',
-    // FIX #2: Subtle Shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
@@ -253,15 +249,13 @@ const styles = StyleSheet.create({
   gridButton: {
     width: '48%',
     aspectRatio: 1.1,
-    // FIX #4: Premium Glass Texture
     backgroundColor: 'rgba(255,255,255,0.04)', 
     borderRadius: 18, 
     padding: 20, 
     marginBottom: 15,
     justifyContent: 'space-between',
-    borderWidth: 1,
+    borderWidth: 1, 
     borderColor: 'rgba(255,255,255,0.06)',
-    // FIX #2: Subtle Shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
@@ -282,11 +276,10 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     borderRadius: 18, 
     padding: 20,
-    backgroundColor: 'rgba(255,255,255,0.04)', // FIX #4
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: 'rgba(79, 141, 255, 0.3)', 
     flexDirection: 'row', alignItems: 'center',
-    // FIX #2: Shadow on Oracle too
     shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
   },
   oracleIconBox: {
@@ -298,15 +291,14 @@ const styles = StyleSheet.create({
   oracleTitle: { fontSize: 15, fontWeight: '900', color: '#EAEAEA', letterSpacing: 1 },
   oracleSubtitle: { fontSize: 12, color: '#888', marginTop: 4 },
 
-  // FIX #3: Spacing, Size, Opacity
   logoutButton: { marginTop: 30, alignItems: 'center', padding: 15 },
   logoutText: { 
     color: '#444', 
-    fontSize: 10, // Smaller
+    fontSize: 10, 
     fontWeight: '700', 
     letterSpacing: 2, 
     textTransform: 'uppercase',
-    opacity: 0.35 // Faded
+    opacity: 0.35
   },
 });
 
